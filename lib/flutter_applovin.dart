@@ -11,7 +11,7 @@ class FlutterApplovin {
   }
   
   static Future<String> get showInterstitial async {
-    final String version = await _channel.invokeMethod('interstitial');
+    final String version = await _channel.invokeMethod('showInterstitial');
     return version;
   }
 }
