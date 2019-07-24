@@ -14,4 +14,13 @@ class FlutterApplovin {
     final String version = await _channel.invokeMethod('showInterstitial');
     return version;
   }
+
+  static Future<String> initApplovin(String appKey) async {
+    final String version = await _channel.invokeMethod('initApplovin', {'appKey': appKey});
+    return version;
+  }
+
+  static configUserId(String userId, String platform) {
+      _channel.invokeMethod('configUserId', {'userId': userId, 'platform': platform});
+  }
 }

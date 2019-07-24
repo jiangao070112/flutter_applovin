@@ -4,16 +4,40 @@
 
 @interface FlutterApplovinPlugin() <ALAdLoadDelegate>
 
-@property (nonatomic, strong) ALAd *ad;
-@property (nonatomic, copy) FlutterResult loadedResult;
+@property (nonatomic, copy)     FlutterResult loadedResult;
+@property (nonatomic, strong)   NSString *customIdentify;
+
+@property (nonatomic, strong)   ALSdk *lovinSdk;
+@property (nonatomic, strong)   ALIncentivizedInterstitialAd *interstitialAd;
 @end
 
 @implementation FlutterApplovinPlugin
 
-- (void)loadInterstitialAd
-{
-    // Load an interstitial ad and be notified when the ad request is finished.
-    [[ALSdk shared].adService loadNextAd: [ALAdSize sizeInterstitial] andNotify: self];
+- (void)initApplovinAd:(NSString *)appKey{
+    
+    if(appKey.length == 0){
+        return;
+    }
+    self.lovinSdk = [ALSdk sharedWithKey:appKey settings:[ALSdkSettings new]];
+    self.interstitialAd = [[ALIncentivizedInterstitialAd alloc] initWithSdk:self.lovinSdk];
+    self.interstitialAd.adDisplayDelegate = self;
+}
+
+- (void)loadInterstitialAd{
+    
+    [self.interstitialAd preloadAndNotify:self];
+}
+
+- (void)showApplovinAd{
+    if (self.customIdentify.length > 0) {
+        self.lovinSdk.userIdentifier = [NSString stringWithFormat:@"%@|%@", self.customIdentify, @"freecoin"];
+    }
+    [self.interstitialAd showAndNotify:self];
+}
+
+- (void)configIdentify:(NSString *)userId andPlatform:(NSString *)platform{
+    
+    self.customIdentify = [NSString stringWithFormat:@"%@|%@", userId ? : @"", platform];
 }
 
 #pragma mark - Ad Load Delegate
@@ -21,7 +45,6 @@
 - (void)adService:(nonnull ALAdService *)adService didLoadAd:(nonnull ALAd *)ad
 {
     // We now have an interstitial ad we can show!
-    self.ad = ad;
     self.loadedResult(@"true");
 }
 
@@ -46,7 +69,12 @@
         [self loadInterstitialAd];
         self.loadedResult = result;
     }else if ([call.method isEqualToString:@"showInterstitial"]){
-        [[ALInterstitialAd shared] showOver: [UIApplication sharedApplication].keyWindow andRender: self.ad];
+        [self showApplovinAd];
+    }else if ([call.method isEqualToString:@"initApplovin"]){
+        NSString *appKey = call.arguments[@"appKey"];
+        [self initApplovinAd:appKey];
+    }else if ([call.method isEqualToString:@"configUserId"]){
+        [self configIdentify:call.arguments[@"userId"] andPlatform:call.arguments[@"platform"]];
     }else {
         result(FlutterMethodNotImplemented);
     }
